@@ -1,11 +1,21 @@
 import {
   createDevToken,
   getGoogleStartUrl,
+  getSession,
   requestCode,
   verifyCode,
 } from "./auth";
 import { createOrder, getOrder } from "./orders";
-import { createProduct, listProducts, updateStock } from "./products";
+import {
+  archiveProduct,
+  createProduct,
+  deleteProductPermanently,
+  listArchivedProducts,
+  listProducts,
+  restoreProduct,
+  updateProduct,
+  updateStock,
+} from "./products";
 import { getPayment, getShipping } from "./tracking";
 
 export { type AuthResponse } from "./auth";
@@ -22,9 +32,15 @@ export const api = {
   verifyCode,
   createDevToken,
   getGoogleStartUrl,
+  getSession,
   listProducts,
+  listArchivedProducts,
   createProduct,
+  updateProduct,
   updateStock,
+  archiveProduct,
+  restoreProduct,
+  deleteProductPermanently,
   createOrder,
   getOrder,
   getPayment,

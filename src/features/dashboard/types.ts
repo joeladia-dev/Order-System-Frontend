@@ -13,6 +13,11 @@ export type OrderFormState = {
   customerId: string;
   shippingAddress: string;
   paymentMethod: string;
+  selectedProductId: string;
+  selectedQuantity: number;
+};
+
+export type OrderDraftItem = {
   productId: string;
   quantity: number;
 };

@@ -9,7 +9,8 @@ export type CreateOrderInput = {
 
 export type CreateOrderResponse = {
   orderId: string;
-  status: string;
+  status: number;
+  correlationId: string;
 };
 
 export type OrderResponse = {
@@ -17,7 +18,7 @@ export type OrderResponse = {
   customerId: string;
   shippingAddress: string;
   paymentMethod: string;
-  status: string;
+  status: number;
   createdAt: string;
   updatedAt: string;
   items: Array<{
@@ -26,7 +27,7 @@ export type OrderResponse = {
   }>;
 };
 
-export function createOrder(input: CreateOrderInput, token: string) {
+export function createOrder(input: CreateOrderInput, token?: string) {
   return requestJson<CreateOrderResponse>("/api/orders", {
     method: "POST",
     body: JSON.stringify(input),
@@ -34,7 +35,7 @@ export function createOrder(input: CreateOrderInput, token: string) {
   });
 }
 
-export function getOrder(orderId: string, token: string) {
+export function getOrder(orderId: string, token?: string) {
   return requestJson<OrderResponse>(`/api/orders/${orderId}`, {
     token,
   });

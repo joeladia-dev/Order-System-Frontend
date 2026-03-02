@@ -33,7 +33,9 @@ export function useAuthActions(state: DashboardState, runBusy: BusyRunner) {
 
   const startGoogle = async () => {
     await runBusy(async () => {
-      const response = await api.getGoogleStartUrl();
+      const response = await api.getGoogleStartUrl(
+        `${window.location.origin}/customer-sign-in`,
+      );
       window.location.href = response.authorizeUrl;
     });
   };

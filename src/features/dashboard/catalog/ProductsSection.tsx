@@ -78,6 +78,23 @@ export function ProductsSection({ controller }: ProductsSectionProps) {
                       ${product.price.toFixed(2)}
                     </p>
                   </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="mt-3 w-full"
+                    onClick={() => controller.selectProductForEdit(product)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="mt-2 w-full"
+                    onClick={() => controller.archiveProduct(product.id)}
+                    disabled={controller.isBusy}
+                  >
+                    Archive
+                  </Button>
                 </div>
               ))}
             </div>
@@ -90,6 +107,7 @@ export function ProductsSection({ controller }: ProductsSectionProps) {
                     <th className="px-3 py-2 text-left font-medium">Name</th>
                     <th className="px-3 py-2 text-left font-medium">Price</th>
                     <th className="px-3 py-2 text-left font-medium">Stock</th>
+                    <th className="px-3 py-2 text-right font-medium">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -99,6 +117,31 @@ export function ProductsSection({ controller }: ProductsSectionProps) {
                       <td className="px-3 py-2">{product.name}</td>
                       <td className="px-3 py-2">${product.price.toFixed(2)}</td>
                       <td className="px-3 py-2">{product.stock}</td>
+                      <td className="px-3 py-2 text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              controller.selectProductForEdit(product)
+                            }
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={() =>
+                              controller.archiveProduct(product.id)
+                            }
+                            disabled={controller.isBusy}
+                          >
+                            Archive
+                          </Button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -262,6 +305,167 @@ export function ProductsSection({ controller }: ProductsSectionProps) {
             Update
           </Button>
         </form>
+
+        <form
+          className="grid gap-3 md:grid-cols-2"
+          onSubmit={controller.updateExistingProduct}
+        >
+          {!controller.editProduct ? (
+            <div className="md:col-span-2 rounded-md border border-border px-3 py-3 text-sm text-muted-foreground">
+              Select a product from the list above to edit it.
+            </div>
+          ) : null}
+          <div className="space-y-1.5 md:col-span-2">
+            <label
+              htmlFor="product-edit-id"
+              className="text-xs font-medium text-muted-foreground"
+            >
+              Product ID
+            </label>
+            <Input
+              id="product-edit-id"
+              value={controller.editProduct?.id ?? ""}
+              disabled
+              placeholder="No product selected"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label
+              htmlFor="product-edit-name"
+              className="text-xs font-medium text-muted-foreground"
+            >
+              Product Name <span className="text-primary">*</span>
+            </label>
+            <Input
+              id="product-edit-name"
+              value={controller.editProduct?.name ?? ""}
+              onChange={(e) =>
+                controller.setEditProduct((prev: Product | null) =>
+                  prev
+                    ? {
+                        ...prev,
+                        name: e.target.value,
+                      }
+                    : prev,
+                )
+              }
+              disabled={!controller.editProduct}
+              required
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label
+              htmlFor="product-edit-price"
+              className="text-xs font-medium text-muted-foreground"
+            >
+              Price <span className="text-primary">*</span>
+            </label>
+            <Input
+              id="product-edit-price"
+              value={controller.editProduct?.price ?? ""}
+              onChange={(e) =>
+                controller.setEditProduct((prev: Product | null) =>
+                  prev
+                    ? {
+                        ...prev,
+                        price: Number(e.target.value),
+                      }
+                    : prev,
+                )
+              }
+              type="number"
+              min={0}
+              step="0.01"
+              disabled={!controller.editProduct}
+              required
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label
+              htmlFor="product-edit-stock"
+              className="text-xs font-medium text-muted-foreground"
+            >
+              Stock <span className="text-primary">*</span>
+            </label>
+            <Input
+              id="product-edit-stock"
+              value={controller.editProduct?.stock ?? ""}
+              onChange={(e) =>
+                controller.setEditProduct((prev: Product | null) =>
+                  prev
+                    ? {
+                        ...prev,
+                        stock: Number(e.target.value),
+                      }
+                    : prev,
+                )
+              }
+              type="number"
+              min={0}
+              disabled={!controller.editProduct}
+              required
+            />
+          </div>
+          <Button
+            disabled={controller.isBusy || !controller.editProduct}
+            type="submit"
+            className="md:self-end"
+          >
+            Save Product Changes
+          </Button>
+        </form>
+
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-foreground">
+            Archived Products
+          </h3>
+          {controller.archivedProducts.length === 0 ? (
+            <div className="rounded-md border border-border px-3 py-4 text-center text-sm text-muted-foreground">
+              No archived products.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {controller.archivedProducts.map((product) => (
+                <div
+                  key={product.id}
+                  className="flex flex-col gap-3 rounded-md border border-border p-3 md:flex-row md:items-center md:justify-between"
+                >
+                  <div className="text-sm">
+                    <p className="font-medium text-foreground">
+                      {product.name}
+                    </p>
+                    <p className="text-muted-foreground">
+                      {product.id} · ${product.price.toFixed(2)} · Stock{" "}
+                      {product.stock}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => controller.restoreProduct(product.id)}
+                      disabled={controller.isBusy}
+                    >
+                      Restore
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() =>
+                        controller.deleteProductPermanently(product.id)
+                      }
+                      disabled={controller.isBusy}
+                    >
+                      Delete Permanently
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

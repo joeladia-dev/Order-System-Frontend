@@ -27,10 +27,10 @@ export function CustomerSignInSection({
         <CardDescription>{controller.tokenHint}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
-        {controller.customerToken && (
-          <p className="inline-flex w-full items-center gap-2 rounded-md border border-primary/35 bg-primary/10 px-3 py-2 text-sm text-foreground">
+        {(controller.customerToken || controller.hasOAuthSession) && (
+          <p className="inline-flex w-fit items-center gap-1.5 rounded-full border border-primary/40 bg-primary/15 px-3 py-1.5 text-xs font-semibold text-primary">
             <CheckCircle2 className="h-4 w-4 text-primary" />
-            Signed in successfully. You can now go directly to Ordering System.
+            Customer session ready
           </p>
         )}
 
@@ -72,8 +72,8 @@ export function CustomerSignInSection({
         </Button>
 
         <p className="rounded-md bg-background/80 px-3 py-2 text-xs text-muted-foreground">
-          Google sign-in may briefly redirect your browser, then return you to
-          continue ordering.
+          Google sign-in may briefly redirect your browser, then return you
+          with cookie-session auth enabled automatically.
         </p>
 
         <Input
@@ -81,6 +81,9 @@ export function CustomerSignInSection({
           onChange={(e) => controller.setCustomerToken(e.target.value)}
           placeholder="Paste customer bearer token"
         />
+        <p className="text-[11px] text-muted-foreground">
+          Optional: manual token paste is only needed for non-browser clients.
+        </p>
       </CardContent>
     </Card>
   );

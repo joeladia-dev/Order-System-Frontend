@@ -1,4 +1,4 @@
-import { Shield } from "lucide-react";
+import { CheckCircle2, Clock3, Shield } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import {
   Card,
@@ -23,10 +23,23 @@ export function AdminAccessSection({ controller }: AdminAccessSectionProps) {
           Admin Product Access
         </CardTitle>
         <CardDescription>
-          Generate local admin token for product creation and stock updates.
+          Use Google OAuth session cookie or generate a local admin token for
+          catalog writes.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {controller.adminToken ? (
+          <p className="inline-flex w-fit items-center gap-1.5 rounded-full border border-primary/40 bg-primary/15 px-3 py-1.5 text-xs font-semibold text-primary">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            Admin token ready
+          </p>
+        ) : (
+          <p className="inline-flex w-fit items-center gap-1.5 rounded-full border border-border/70 bg-muted/70 px-3 py-1.5 text-xs font-semibold text-foreground">
+            <Clock3 className="h-3.5 w-3.5" />
+            Admin auth required (cookie session or token)
+          </p>
+        )}
+
         <div className="space-y-1.5">
           <label
             htmlFor="admin-email"
@@ -67,7 +80,7 @@ export function AdminAccessSection({ controller }: AdminAccessSectionProps) {
             placeholder="Paste admin bearer token"
           />
           <p className="text-[11px] text-muted-foreground">
-            Optional if you generated a token in this page.
+            Optional when signed in through Google OAuth admin session.
           </p>
         </div>
       </CardContent>

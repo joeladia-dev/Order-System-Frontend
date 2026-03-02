@@ -13,12 +13,13 @@ export function useTrackingActions(state: DashboardState, runBusy: BusyRunner) {
     }
 
     await runBusy(async () => {
+      const trackingToken =
+        state.adminToken || state.customerToken || undefined;
+
       const [order, payment, shipping] = await Promise.allSettled([
-        state.customerToken
-          ? api.getOrder(state.trackOrderId, state.customerToken)
-          : Promise.resolve(undefined),
-        api.getPayment(state.trackOrderId),
-        api.getShipping(state.trackOrderId),
+        api.getOrder(state.trackOrderId, trackingToken),
+        api.getPayment(state.trackOrderId, trackingToken),
+        api.getShipping(state.trackOrderId, trackingToken),
       ]);
 
       state.setTrackData({

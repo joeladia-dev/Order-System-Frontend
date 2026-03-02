@@ -1,4 +1,5 @@
 import { ClipboardList } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { PageHero } from "../layout/PageHero";
 import { OrderSection } from "../orders/OrderSection";
 import { TrackingSection } from "../tracking/TrackingSection";
@@ -9,6 +10,36 @@ type OrderingSystemPageProps = {
 };
 
 export function OrderingSystemPage({ controller }: OrderingSystemPageProps) {
+  const hasRequestedProductsRef = useRef(false);
+
+  useEffect(() => {
+    if (hasRequestedProductsRef.current || controller.products.length > 0) {
+      return;
+    }
+
+    hasRequestedProductsRef.current = true;
+    controller.loadProducts();
+  }, [controller.products.length, controller.loadProducts]);
+
+  useEffect(() => {
+    if (controller.orderForm.selectedProductId || controller.products.length === 0) {
+      return;
+    }
+
+    const firstAvailable = controller.products.find(
+      (product) => !product.isArchived && product.stock > 0,
+    );
+
+    if (!firstAvailable) {
+      return;
+    }
+
+    controller.setOrderForm((prev) => ({
+      ...prev,
+      selectedProductId: firstAvailable.id,
+    }));
+  }, [controller.orderForm.selectedProductId, controller.products, controller.setOrderForm]);
+
   return (
     <section className="space-y-5">
       <PageHero

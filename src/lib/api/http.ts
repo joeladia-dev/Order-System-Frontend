@@ -17,6 +17,7 @@ export async function requestJson<T>(
   const response = await fetch(path, {
     ...init,
     headers,
+    credentials: "include",
   });
 
   if (!response.ok) {

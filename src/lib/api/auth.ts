@@ -11,6 +11,19 @@ export type AuthResponse = {
   };
 };
 
+export type AuthSessionResponse = {
+  authenticated: boolean;
+  accessToken?: string;
+  tokenType?: string;
+  expiresAt?: string;
+  user: {
+    id: string;
+    email: string;
+    roles: string[];
+    scopes: string[];
+  };
+};
+
 export function requestCode(email: string) {
   return requestJson<{ verificationCode?: string; expiresInSeconds: number }>(
     "/api/auth/request-code",
@@ -35,6 +48,20 @@ export function createDevToken(email: string, roles: string[]) {
   });
 }
 
-export function getGoogleStartUrl() {
-  return requestJson<{ authorizeUrl: string }>("/api/auth/oauth/start/google");
+export function getGoogleStartUrl(returnUrl?: string) {
+  const params = new URLSearchParams();
+  if (returnUrl) {
+    params.set("returnUrl", returnUrl);
+  }
+
+  const path =
+    params.size > 0
+      ? `/api/auth/oauth/start/google?${params.toString()}`
+      : "/api/auth/oauth/start/google";
+
+  return requestJson<{ authorizeUrl: string }>(path);
+}
+
+export function getSession() {
+  return requestJson<AuthSessionResponse>("/api/auth/session");
 }

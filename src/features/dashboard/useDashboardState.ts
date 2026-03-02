@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { Product } from "../../lib/api";
 import type {
+  OrderDraftItem,
   OrderFormState,
   OrderTrackResult,
   StockUpdateForm,
@@ -16,11 +17,13 @@ export function useDashboardState() {
   );
   const [otpCode, setOtpCode] = useState("");
   const [customerToken, setCustomerToken] = useState("");
+  const [hasOAuthSession, setHasOAuthSession] = useState(false);
 
   const [adminEmail, setAdminEmail] = useState("admin@ordersystem.local");
   const [adminToken, setAdminToken] = useState("");
 
   const [products, setProducts] = useState<Product[]>([]);
+  const [archivedProducts, setArchivedProducts] = useState<Product[]>([]);
 
   const [newProduct, setNewProduct] = useState<Product>({
     id: "sku-1000",
@@ -28,6 +31,8 @@ export function useDashboardState() {
     price: 25,
     stock: 12,
   });
+
+  const [editProduct, setEditProduct] = useState<Product | null>(null);
 
   const [stockUpdate, setStockUpdate] = useState<StockUpdateForm>({
     productId: "sku-1000",
@@ -38,15 +43,19 @@ export function useDashboardState() {
     customerId: "cust-web-001",
     shippingAddress: "221B Baker Street, London",
     paymentMethod: "Card",
-    productId: "sku-1000",
-    quantity: 1,
+    selectedProductId: "",
+    selectedQuantity: 1,
   });
+  const [orderItems, setOrderItems] = useState<OrderDraftItem[]>([]);
 
   const [createdOrderId, setCreatedOrderId] = useState("");
   const [trackOrderId, setTrackOrderId] = useState("");
   const [trackData, setTrackData] = useState<OrderTrackResult>({});
 
-  const tokenHint = useMemo(() => getTokenHint(customerToken), [customerToken]);
+  const tokenHint = useMemo(
+    () => getTokenHint(customerToken, hasOAuthSession),
+    [customerToken, hasOAuthSession],
+  );
 
   return {
     status,
@@ -60,18 +69,26 @@ export function useDashboardState() {
     setOtpCode,
     customerToken,
     setCustomerToken,
+    hasOAuthSession,
+    setHasOAuthSession,
     adminEmail,
     setAdminEmail,
     adminToken,
     setAdminToken,
     products,
     setProducts,
+    archivedProducts,
+    setArchivedProducts,
     newProduct,
     setNewProduct,
+    editProduct,
+    setEditProduct,
     stockUpdate,
     setStockUpdate,
     orderForm,
     setOrderForm,
+    orderItems,
+    setOrderItems,
     createdOrderId,
     setCreatedOrderId,
     trackOrderId,
