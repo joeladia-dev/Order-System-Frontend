@@ -21,6 +21,7 @@ export function useDashboardState() {
 
   const [adminEmail, setAdminEmail] = useState("admin@ordersystem.local");
   const [adminToken, setAdminToken] = useState("");
+  const [hasAdminSession, setHasAdminSession] = useState(false);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [archivedProducts, setArchivedProducts] = useState<Product[]>([]);
@@ -40,7 +41,7 @@ export function useDashboardState() {
   });
 
   const [orderForm, setOrderForm] = useState<OrderFormState>({
-    customerId: "cust-web-001",
+    customerId: "",
     shippingAddress: "221B Baker Street, London",
     paymentMethod: "Card",
     selectedProductId: "",
@@ -79,6 +80,8 @@ export function useDashboardState() {
     setAdminEmail,
     adminToken,
     setAdminToken,
+    hasAdminSession,
+    setHasAdminSession,
     products,
     setProducts,
     archivedProducts,

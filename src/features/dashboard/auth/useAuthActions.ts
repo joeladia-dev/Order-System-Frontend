@@ -27,6 +27,11 @@ export function useAuthActions(state: DashboardState, runBusy: BusyRunner) {
     await runBusy(async () => {
       const response = await api.verifyCode(state.customerEmail, state.otpCode);
       state.setCustomerToken(response.accessToken);
+      state.setOrderForm((prev) => ({
+        ...prev,
+        customerId: response.user.id,
+      }));
+      state.setHasAdminSession(false);
       state.setStatus(`Signed in as ${response.user.email}`);
     });
   };
@@ -44,7 +49,31 @@ export function useAuthActions(state: DashboardState, runBusy: BusyRunner) {
     await runBusy(async () => {
       const response = await api.createDevToken(state.adminEmail, ["admin"]);
       state.setAdminToken(response.accessToken);
+      state.setHasAdminSession(true);
       state.setStatus(`Admin token generated for ${response.user.email}`);
+    });
+  };
+
+  const logoutCustomer = async () => {
+    await runBusy(async () => {
+      await api.logout();
+      state.setCustomerToken("");
+      state.setHasOAuthSession(false);
+      state.setAdminToken("");
+      state.setHasAdminSession(false);
+      state.setOtpCode("");
+      state.setTrackOrderId("");
+      state.setTrackData({});
+      state.setCustomerOrders([]);
+      state.setCustomerOrdersError("");
+      state.setSelectedHistoryOrderId("");
+      state.setCreatedOrderId("");
+      state.setOrderItems([]);
+      state.setOrderForm((prev) => ({
+        ...prev,
+        customerId: "",
+      }));
+      state.setStatus("Signed out. You can now sign in with another account.");
     });
   };
 
@@ -53,5 +82,6 @@ export function useAuthActions(state: DashboardState, runBusy: BusyRunner) {
     verifyCode,
     startGoogle,
     createAdminToken,
+    logoutCustomer,
   };
 }

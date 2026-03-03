@@ -7,11 +7,22 @@ import { AdminAccessPage } from "./features/dashboard/pages/AdminAccessPage";
 import { CustomerSignInPage } from "./features/dashboard/pages/CustomerSignInPage";
 import { LandingPage } from "./features/dashboard/pages/LandingPage";
 import { OrderingSystemPage } from "./features/dashboard/pages/OrderingSystemPage";
+import { tokenSubjectId } from "./features/dashboard/selectors";
 import { useDashboardController } from "./features/dashboard/useDashboardController";
 import { api } from "./lib/api";
 
 function App() {
   const controller = useDashboardController();
+  const hasCustomerSession =
+    Boolean(controller.customerToken) || controller.hasOAuthSession;
+  const hasAdminOnlySession =
+    !hasCustomerSession && Boolean(controller.adminToken);
+  const canLogout = hasCustomerSession || hasAdminOnlySession;
+  const logoutIndicatorTone = hasCustomerSession
+    ? "customer"
+    : hasAdminOnlySession
+      ? "admin"
+      : null;
   const navigate = useNavigate();
   const location = useLocation();
   const sessionBootstrapDoneRef = useRef(false);
@@ -33,14 +44,20 @@ function App() {
 
     sessionBootstrapDoneRef.current = true;
 
-    api.getSession()
+    api
+      .getSession()
       .then(async (session) => {
         if (!session.authenticated) {
           return;
         }
 
         controller.setHasOAuthSession(true);
+        controller.setHasAdminSession(session.user.roles.includes("admin"));
         controller.setCustomerEmail((prev) => prev || session.user.email);
+        controller.setOrderForm((prev) => ({
+          ...prev,
+          customerId: session.user.id,
+        }));
         if (session.accessToken) {
           controller.setCustomerToken(session.accessToken);
         }
@@ -50,8 +67,7 @@ function App() {
           `Already signed in as ${session.user.email}. You can continue to Ordering System.`,
         );
       })
-      .catch(() => {
-      });
+      .catch(() => {});
   }, [controller]);
 
   useEffect(() => {
@@ -71,11 +87,17 @@ function App() {
     const targetPath = "/customer-sign-in";
     const targetUrl = `${targetPath}${cleanedSearch ? `?${cleanedSearch}` : ""}${location.hash}`;
 
-    api.getSession()
+    api
+      .getSession()
       .then(async (session) => {
         if (session.authenticated) {
           controller.setHasOAuthSession(true);
+          controller.setHasAdminSession(session.user.roles.includes("admin"));
           controller.setCustomerEmail((prev) => prev || session.user.email);
+          controller.setOrderForm((prev) => ({
+            ...prev,
+            customerId: session.user.id,
+          }));
           if (session.accessToken) {
             controller.setCustomerToken(session.accessToken);
           }
@@ -87,16 +109,36 @@ function App() {
               : "Google OAuth sign-in completed. You are already signed in and can go to Ordering System.",
           );
         } else {
-          controller.setStatus("Google OAuth completed, but no active session was detected.");
+          controller.setStatus(
+            "Google OAuth completed, but no active session was detected.",
+          );
         }
       })
       .catch(() => {
-        controller.setStatus("Google OAuth completed, but session bootstrap failed.");
+        controller.setStatus(
+          "Google OAuth completed, but session bootstrap failed.",
+        );
       })
       .finally(() => {
         navigate(targetUrl, { replace: true });
       });
   }, [controller, location.hash, location.search, navigate]);
+
+  useEffect(() => {
+    const subjectId = tokenSubjectId(controller.customerToken);
+    if (!subjectId) {
+      return;
+    }
+
+    controller.setOrderForm((prev) =>
+      prev.customerId === subjectId
+        ? prev
+        : {
+            ...prev,
+            customerId: subjectId,
+          },
+    );
+  }, [controller, controller.customerToken]);
 
   return (
     <>
@@ -104,7 +146,12 @@ function App() {
         <div className="mx-auto w-full max-w-[96rem] px-4 py-3 md:px-10 md:py-4">
           <div className="rounded-2xl border border-border/60 bg-gradient-to-r from-primary/22 via-accent/18 to-secondary/60 px-3 py-3 shadow-sm md:px-4">
             <DashboardHeader status={controller.status} />
-            <AppNavigation />
+            <AppNavigation
+              canLogout={canLogout}
+              isBusy={controller.isBusy}
+              onLogout={controller.logoutCustomer}
+              logoutIndicatorTone={logoutIndicatorTone}
+            />
           </div>
         </div>
       </header>

@@ -27,7 +27,7 @@ export function DashboardHeader({ status }: DashboardHeaderProps) {
       <div>
         <p className="mb-2 inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/75 px-3 py-1 text-xs text-muted-foreground shadow-sm">
           <Shield className="h-3.5 w-3.5" />
-          Phase 2 · Order System UI
+          Order System UI
         </p>
         <h1 className="bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-xl font-bold tracking-tight text-transparent sm:text-2xl md:text-3xl">
           Order System Control Center

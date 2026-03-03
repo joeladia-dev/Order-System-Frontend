@@ -1,11 +1,27 @@
 import type { FormEvent } from "react";
 import { api } from "../../../lib/api";
+import { tokenHasAdminRole } from "../selectors";
 import type { DashboardState } from "../useDashboardState";
 
 type BusyRunner = (action: () => Promise<void>) => Promise<void>;
 
 export function useCatalogActions(state: DashboardState, runBusy: BusyRunner) {
   const getAdminAuthToken = () => state.adminToken || undefined;
+  const hasAdminAccess = () =>
+    state.hasAdminSession || tokenHasAdminRole(state.adminToken);
+
+  const ensureAdminAccess = () => {
+    if (hasAdminAccess()) {
+      return true;
+    }
+
+    state.setStatus(
+      state.adminToken
+        ? "Current token is not an admin token. Use Admin Access to generate a valid admin token."
+        : "Admin access required for catalog updates.",
+    );
+    return false;
+  };
 
   const loadArchivedProducts = async () => {
     try {
@@ -51,6 +67,10 @@ export function useCatalogActions(state: DashboardState, runBusy: BusyRunner) {
   const createProduct = async (event: FormEvent) => {
     event.preventDefault();
 
+    if (!ensureAdminAccess()) {
+      return;
+    }
+
     await runBusy(async () => {
       await api.createProduct(state.newProduct, getAdminAuthToken());
       state.setStatus(`Created product ${state.newProduct.id}`);
@@ -60,6 +80,10 @@ export function useCatalogActions(state: DashboardState, runBusy: BusyRunner) {
 
   const updateStock = async (event: FormEvent) => {
     event.preventDefault();
+
+    if (!ensureAdminAccess()) {
+      return;
+    }
 
     await runBusy(async () => {
       await api.updateStock(
@@ -88,6 +112,10 @@ export function useCatalogActions(state: DashboardState, runBusy: BusyRunner) {
   const updateExistingProduct = async (event: FormEvent) => {
     event.preventDefault();
 
+    if (!ensureAdminAccess()) {
+      return;
+    }
+
     if (!state.editProduct) {
       state.setStatus("Select a product to edit.");
       return;
@@ -112,6 +140,10 @@ export function useCatalogActions(state: DashboardState, runBusy: BusyRunner) {
   };
 
   const archiveProduct = async (productId: string) => {
+    if (!ensureAdminAccess()) {
+      return;
+    }
+
     await runBusy(async () => {
       await api.archiveProduct(productId, getAdminAuthToken());
       state.setStatus(`Archived product ${productId}`);
@@ -123,6 +155,10 @@ export function useCatalogActions(state: DashboardState, runBusy: BusyRunner) {
   };
 
   const restoreProduct = async (productId: string) => {
+    if (!ensureAdminAccess()) {
+      return;
+    }
+
     await runBusy(async () => {
       await api.restoreProduct(productId, getAdminAuthToken());
       state.setStatus(`Restored product ${productId}`);
@@ -131,6 +167,10 @@ export function useCatalogActions(state: DashboardState, runBusy: BusyRunner) {
   };
 
   const deleteProductPermanently = async (productId: string) => {
+    if (!ensureAdminAccess()) {
+      return;
+    }
+
     await runBusy(async () => {
       await api.deleteProductPermanently(productId, getAdminAuthToken());
       state.setStatus(`Permanently deleted product ${productId}`);

@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock3, Shield } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock3, Shield } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import {
   Card,
@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from "../../../components/ui/card";
 import { Input } from "../../../components/ui/input";
+import { tokenHasAdminRole } from "../selectors";
 import type { DashboardController } from "../useDashboardController";
 
 type AdminAccessSectionProps = {
@@ -15,6 +16,10 @@ type AdminAccessSectionProps = {
 };
 
 export function AdminAccessSection({ controller }: AdminAccessSectionProps) {
+  const hasAdminToken = Boolean(controller.adminToken.trim());
+  const hasValidAdminAccess =
+    controller.hasAdminSession || tokenHasAdminRole(controller.adminToken);
+
   return (
     <Card>
       <CardHeader>
@@ -28,10 +33,10 @@ export function AdminAccessSection({ controller }: AdminAccessSectionProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {controller.adminToken ? (
+        {hasValidAdminAccess ? (
           <p className="inline-flex w-fit items-center gap-1.5 rounded-full border border-primary/40 bg-primary/15 px-3 py-1.5 text-xs font-semibold text-primary">
             <CheckCircle2 className="h-3.5 w-3.5" />
-            Admin token ready
+            Admin access ready
           </p>
         ) : (
           <p className="inline-flex w-fit items-center gap-1.5 rounded-full border border-border/70 bg-muted/70 px-3 py-1.5 text-xs font-semibold text-foreground">
@@ -79,6 +84,20 @@ export function AdminAccessSection({ controller }: AdminAccessSectionProps) {
             onChange={(e) => controller.setAdminToken(e.target.value)}
             placeholder="Paste admin bearer token"
           />
+          {hasAdminToken && (
+            <p
+              className={`inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${hasValidAdminAccess ? "border-primary/40 bg-primary/15 text-primary" : "border-border/70 bg-muted/70 text-foreground"}`}
+            >
+              {hasValidAdminAccess ? (
+                <CheckCircle2 className="h-3.5 w-3.5" />
+              ) : (
+                <AlertTriangle className="h-3.5 w-3.5" />
+              )}
+              {hasValidAdminAccess
+                ? "Admin token valid"
+                : "Token does not include admin role"}
+            </p>
+          )}
           <p className="text-[11px] text-muted-foreground">
             Optional when signed in through Google OAuth admin session.
           </p>

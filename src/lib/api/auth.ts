@@ -65,3 +65,9 @@ export function getGoogleStartUrl(returnUrl?: string) {
 export function getSession() {
   return requestJson<AuthSessionResponse>("/api/auth/session");
 }
+
+export function logout() {
+  return requestJson<{ signedOut: boolean }>("/api/auth/logout", {
+    method: "POST",
+  });
+}

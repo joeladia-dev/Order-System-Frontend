@@ -2,6 +2,7 @@ import {
   createDevToken,
   getGoogleStartUrl,
   getSession,
+  logout,
   requestCode,
   verifyCode,
 } from "./auth";
@@ -33,6 +34,7 @@ export const api = {
   createDevToken,
   getGoogleStartUrl,
   getSession,
+  logout,
   listProducts,
   listArchivedProducts,
   createProduct,

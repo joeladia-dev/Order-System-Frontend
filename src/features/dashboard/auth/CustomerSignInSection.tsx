@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from "../../../components/ui/card";
 import { Input } from "../../../components/ui/input";
+import { tokenSubjectId } from "../selectors";
 import type { DashboardController } from "../useDashboardController";
 
 type CustomerSignInSectionProps = {
@@ -72,13 +73,34 @@ export function CustomerSignInSection({
         </Button>
 
         <p className="rounded-md bg-background/80 px-3 py-2 text-xs text-muted-foreground">
-          Google sign-in may briefly redirect your browser, then return you
-          with cookie-session auth enabled automatically.
+          Google sign-in may briefly redirect your browser, then return you with
+          cookie-session auth enabled automatically.
         </p>
 
         <Input
           value={controller.customerToken}
-          onChange={(e) => controller.setCustomerToken(e.target.value)}
+          onChange={(e) => {
+            const nextToken = e.target.value;
+            controller.setCustomerToken(nextToken);
+
+            const subjectId = tokenSubjectId(nextToken);
+            if (subjectId) {
+              controller.setOrderForm((prev) =>
+                prev.customerId === subjectId
+                  ? prev
+                  : { ...prev, customerId: subjectId },
+              );
+            } else if (!nextToken.trim() && !controller.hasOAuthSession) {
+              controller.setOrderForm((prev) =>
+                prev.customerId
+                  ? {
+                      ...prev,
+                      customerId: "",
+                    }
+                  : prev,
+              );
+            }
+          }}
           placeholder="Paste customer bearer token"
         />
         <p className="text-[11px] text-muted-foreground">

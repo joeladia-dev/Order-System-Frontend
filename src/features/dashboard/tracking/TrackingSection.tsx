@@ -23,6 +23,7 @@ import type {
   PaymentResponse,
   ShippingResponse,
 } from "../../../lib/api";
+import { tokenSubjectId } from "../selectors";
 import type { DashboardController } from "../useDashboardController";
 
 type TrackingSectionProps = {
@@ -43,9 +44,9 @@ export function TrackingSection({ controller }: TrackingSectionProps) {
     isShippingData(controller.trackData.shipping)
       ? controller.trackData.shipping
       : undefined;
-  const customerIdForHistory = (
-    order?.customerId ?? controller.orderForm.customerId
-  ).trim();
+  const customerIdForHistory =
+    controller.orderForm.customerId.trim() ||
+    tokenSubjectId(controller.customerToken);
   const isHistoryAuthenticated = Boolean(
     controller.adminToken ||
     controller.customerToken ||

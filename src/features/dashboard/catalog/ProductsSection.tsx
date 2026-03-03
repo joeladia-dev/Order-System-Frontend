@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "../../../components/ui/card";
 import { Input } from "../../../components/ui/input";
+import { tokenHasAdminRole } from "../selectors";
 import type { DashboardController } from "../useDashboardController";
 
 type ProductsSectionProps = {
@@ -16,6 +17,9 @@ type ProductsSectionProps = {
 };
 
 export function ProductsSection({ controller }: ProductsSectionProps) {
+  const hasAdminAccess =
+    controller.hasAdminSession || tokenHasAdminRole(controller.adminToken);
+
   return (
     <Card>
       <CardHeader>
@@ -83,6 +87,7 @@ export function ProductsSection({ controller }: ProductsSectionProps) {
                     variant="outline"
                     className="mt-3 w-full"
                     onClick={() => controller.selectProductForEdit(product)}
+                    disabled={controller.isBusy || !hasAdminAccess}
                   >
                     Edit
                   </Button>
@@ -91,7 +96,7 @@ export function ProductsSection({ controller }: ProductsSectionProps) {
                     variant="secondary"
                     className="mt-2 w-full"
                     onClick={() => controller.archiveProduct(product.id)}
-                    disabled={controller.isBusy}
+                    disabled={controller.isBusy || !hasAdminAccess}
                   >
                     Archive
                   </Button>
@@ -128,6 +133,7 @@ export function ProductsSection({ controller }: ProductsSectionProps) {
                             onClick={() =>
                               controller.selectProductForEdit(product)
                             }
+                            disabled={controller.isBusy || !hasAdminAccess}
                           >
                             Edit
                           </Button>
@@ -138,7 +144,7 @@ export function ProductsSection({ controller }: ProductsSectionProps) {
                             onClick={() =>
                               controller.archiveProduct(product.id)
                             }
-                            disabled={controller.isBusy}
+                            disabled={controller.isBusy || !hasAdminAccess}
                           >
                             Archive
                           </Button>
@@ -245,7 +251,7 @@ export function ProductsSection({ controller }: ProductsSectionProps) {
             />
           </div>
           <Button
-            disabled={controller.isBusy}
+            disabled={controller.isBusy || !hasAdminAccess}
             type="submit"
             className="md:col-span-2"
           >
@@ -267,15 +273,13 @@ export function ProductsSection({ controller }: ProductsSectionProps) {
             <Input
               id="product-update-id"
               value={controller.stockUpdate.productId}
-              onChange={(e) =>
-                controller.setStockUpdate((prev) => ({
-                  ...prev,
-                  productId: e.target.value,
-                }))
-              }
+              readOnly
               placeholder="Product ID"
               required
             />
+            <p className="text-[11px] text-muted-foreground">
+              View only. Select a product from the list to change the target ID.
+            </p>
           </div>
           <div className="space-y-1.5">
             <label
@@ -300,7 +304,7 @@ export function ProductsSection({ controller }: ProductsSectionProps) {
             />
           </div>
           <Button
-            disabled={controller.isBusy}
+            disabled={controller.isBusy || !hasAdminAccess}
             type="submit"
             className="md:self-end"
           >
@@ -409,7 +413,9 @@ export function ProductsSection({ controller }: ProductsSectionProps) {
             />
           </div>
           <Button
-            disabled={controller.isBusy || !controller.editProduct}
+            disabled={
+              controller.isBusy || !controller.editProduct || !hasAdminAccess
+            }
             type="submit"
             className="md:self-end"
           >
@@ -447,7 +453,7 @@ export function ProductsSection({ controller }: ProductsSectionProps) {
                       variant="outline"
                       size="sm"
                       onClick={() => controller.restoreProduct(product.id)}
-                      disabled={controller.isBusy}
+                      disabled={controller.isBusy || !hasAdminAccess}
                     >
                       Restore
                     </Button>
@@ -458,7 +464,7 @@ export function ProductsSection({ controller }: ProductsSectionProps) {
                       onClick={() =>
                         controller.deleteProductPermanently(product.id)
                       }
-                      disabled={controller.isBusy}
+                      disabled={controller.isBusy || !hasAdminAccess}
                     >
                       Delete Permanently
                     </Button>

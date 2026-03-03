@@ -1,5 +1,6 @@
 import type { FormEvent } from "react";
 import { api } from "../../../lib/api";
+import { tokenSubjectId } from "../selectors";
 import type { DashboardState } from "../useDashboardState";
 
 type BusyRunner = (action: () => Promise<void>) => Promise<void>;
@@ -9,6 +10,35 @@ export function useTrackingActions(state: DashboardState, runBusy: BusyRunner) {
     state.adminToken || state.customerToken || undefined;
   const isTrackingAuthenticated = () =>
     Boolean(state.adminToken || state.customerToken || state.hasOAuthSession);
+
+  const refreshTrackingTokenFromSession = async () => {
+    if (!state.hasOAuthSession || state.adminToken) {
+      return undefined;
+    }
+
+    try {
+      const session = await api.getSession();
+      if (!session.authenticated || !session.accessToken) {
+        return undefined;
+      }
+
+      state.setCustomerToken(session.accessToken);
+      if (session.user?.id) {
+        state.setOrderForm((prev) =>
+          prev.customerId === session.user.id
+            ? prev
+            : {
+                ...prev,
+                customerId: session.user.id,
+              },
+        );
+      }
+
+      return session.accessToken;
+    } catch {
+      return undefined;
+    }
+  };
 
   const refreshTrackData = async (orderId: string) => {
     const trackingToken = getTrackingToken();
@@ -53,7 +83,8 @@ export function useTrackingActions(state: DashboardState, runBusy: BusyRunner) {
   };
 
   const loadCustomerOrders = async (customerId: string) => {
-    const normalizedCustomerId = customerId.trim();
+    const normalizedCustomerId =
+      customerId.trim() || tokenSubjectId(state.customerToken);
     if (!normalizedCustomerId) {
       state.setCustomerOrders([]);
       state.setCustomerOrdersError("");
@@ -70,13 +101,44 @@ export function useTrackingActions(state: DashboardState, runBusy: BusyRunner) {
     state.setCustomerOrdersError("");
 
     try {
-      const orders = await api.listOrdersForCustomer(
-        normalizedCustomerId,
-        getTrackingToken(),
-      );
+      let trackingToken = getTrackingToken();
+      let orders;
 
-      state.setCustomerOrders(orders);
-      if (!orders.some((order) => order.id === state.selectedHistoryOrderId)) {
+      try {
+        orders = await api.listOrdersForCustomer(
+          normalizedCustomerId,
+          trackingToken,
+        );
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unable to load orders.";
+        const isUnauthorized = /401|unauthorized/i.test(message);
+
+        if (isUnauthorized && !trackingToken && state.hasOAuthSession) {
+          const refreshedToken = await refreshTrackingTokenFromSession();
+          if (refreshedToken) {
+            trackingToken = refreshedToken;
+            orders = await api.listOrdersForCustomer(
+              normalizedCustomerId,
+              trackingToken,
+            );
+          } else {
+            throw new Error(
+              "Session expired. Sign in again to load previous orders.",
+            );
+          }
+        } else {
+          throw error;
+        }
+      }
+
+      const resolvedOrders = orders ?? [];
+      state.setCustomerOrders(resolvedOrders);
+      if (
+        !resolvedOrders.some(
+          (order) => order.id === state.selectedHistoryOrderId,
+        )
+      ) {
         state.setSelectedHistoryOrderId("");
       }
     } catch (error) {

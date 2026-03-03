@@ -1,5 +1,6 @@
 import type { FormEvent } from "react";
 import { api } from "../../../lib/api";
+import { tokenSubjectId } from "../selectors";
 import type { DashboardState } from "../useDashboardState";
 
 type BusyRunner = (action: () => Promise<void>) => Promise<void>;
@@ -114,6 +115,15 @@ export function useOrderActions(state: DashboardState, runBusy: BusyRunner) {
   const createOrder = async (event: FormEvent) => {
     event.preventDefault();
 
+    const resolvedCustomerId =
+      state.orderForm.customerId.trim() || tokenSubjectId(state.customerToken);
+    if (!resolvedCustomerId) {
+      state.setStatus(
+        "Sign in first so your account identity can be used for the order.",
+      );
+      return;
+    }
+
     if (state.orderItems.length === 0) {
       state.setStatus("Add at least one item before placing an order.");
       return;
@@ -124,7 +134,7 @@ export function useOrderActions(state: DashboardState, runBusy: BusyRunner) {
 
       const response = await api.createOrder(
         {
-          customerId: state.orderForm.customerId,
+          customerId: resolvedCustomerId,
           shippingAddress: state.orderForm.shippingAddress,
           paymentMethod: state.orderForm.paymentMethod,
           items: state.orderItems,
