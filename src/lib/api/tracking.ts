@@ -7,6 +7,7 @@ export type PaymentResponse = {
   transactionId: string;
   amount: number;
   updatedAt: string;
+  failureReason?: string | null;
 };
 
 export type ShippingResponse = {
@@ -15,8 +16,10 @@ export type ShippingResponse = {
   status: number;
   trackingNumber: string;
   createdAt: string;
+  lastUpdatedAt?: string;
   estimatedDeliveryDate: string;
   deliveredAt: string | null;
+  failureReason?: string | null;
 };
 
 export function getPayment(orderId: string, token?: string) {

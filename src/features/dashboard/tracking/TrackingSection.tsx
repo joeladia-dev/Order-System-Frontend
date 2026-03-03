@@ -8,7 +8,7 @@ import {
   ShoppingCart,
   Truck,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { Button } from "../../../components/ui/button";
 import {
   Card,
@@ -30,8 +30,63 @@ type TrackingSectionProps = {
 };
 
 export function TrackingSection({ controller }: TrackingSectionProps) {
+  const order =
+    controller.trackData.order && isOrderData(controller.trackData.order)
+      ? controller.trackData.order
+      : undefined;
+  const payment =
+    controller.trackData.payment && isPaymentData(controller.trackData.payment)
+      ? controller.trackData.payment
+      : undefined;
+  const shipping =
+    controller.trackData.shipping &&
+    isShippingData(controller.trackData.shipping)
+      ? controller.trackData.shipping
+      : undefined;
+  const customerIdForHistory = (
+    order?.customerId ?? controller.orderForm.customerId
+  ).trim();
+  const isHistoryAuthenticated = Boolean(
+    controller.adminToken ||
+    controller.customerToken ||
+    controller.hasOAuthSession,
+  );
+  const historyLoadRef = useRef("");
+
+  useEffect(() => {
+    if (!customerIdForHistory) {
+      controller.setCustomerOrders([]);
+      controller.setCustomerOrdersError("");
+      historyLoadRef.current = "";
+      return;
+    }
+
+    if (!isHistoryAuthenticated) {
+      controller.setCustomerOrders([]);
+      controller.setCustomerOrdersError("");
+      historyLoadRef.current = "";
+      return;
+    }
+
+    const authKey = `${Boolean(controller.customerToken)}-${Boolean(controller.adminToken)}-${Boolean(controller.hasOAuthSession)}`;
+    const loadKey = `${customerIdForHistory}|${authKey}`;
+
+    if (historyLoadRef.current === loadKey) {
+      return;
+    }
+
+    historyLoadRef.current = loadKey;
+    void controller.loadCustomerOrders(customerIdForHistory);
+  }, [
+    customerIdForHistory,
+    controller.customerToken,
+    controller.adminToken,
+    controller.hasOAuthSession,
+    isHistoryAuthenticated,
+  ]);
+
   return (
-    <section>
+    <section className="min-w-0">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
@@ -45,10 +100,10 @@ export function TrackingSection({ controller }: TrackingSectionProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <form
-            className="grid gap-3 md:grid-cols-[1fr_auto]"
+            className="grid gap-3 md:grid-cols-[75%_16.666667%] md:items-start"
             onSubmit={controller.trackOrder}
           >
-            <div className="space-y-1.5">
+            <div className="min-w-0 space-y-1.5">
               <label
                 htmlFor="track-order-id"
                 className="text-xs font-medium text-muted-foreground"
@@ -67,9 +122,10 @@ export function TrackingSection({ controller }: TrackingSectionProps) {
               </p>
             </div>
             <Button
+              size="sm"
               disabled={controller.isBusy}
               type="submit"
-              className="md:self-end"
+              className="h-9 md:mt-8 md:self-start"
             >
               <Search className="h-4 w-4" />
               Track
@@ -80,6 +136,12 @@ export function TrackingSection({ controller }: TrackingSectionProps) {
             Tip: Order data often appears first, while payment/shipping can be
             briefly delayed.
           </p>
+
+          <FulfillmentTimeline
+            order={order}
+            payment={payment}
+            shipping={shipping}
+          />
 
           <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
             <TrackCard
@@ -103,6 +165,152 @@ export function TrackingSection({ controller }: TrackingSectionProps) {
               data={controller.trackData.shipping}
               delayClassName="ui-fade-in ui-delay-3"
             />
+          </div>
+
+          <div className="space-y-3 rounded-md border border-border/70 bg-background/70 p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold text-foreground">
+                  Previous Orders
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Customer: {customerIdForHistory || "-"}
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  void controller.loadCustomerOrders(customerIdForHistory)
+                }
+                disabled={
+                  controller.isCustomerOrdersLoading ||
+                  !customerIdForHistory ||
+                  !isHistoryAuthenticated
+                }
+              >
+                Refresh
+              </Button>
+            </div>
+
+            {controller.customerOrdersError && (
+              <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                Unable to load orders: {controller.customerOrdersError}
+              </p>
+            )}
+
+            {controller.isCustomerOrdersLoading ? (
+              <p className="text-sm text-muted-foreground">
+                Loading previous orders...
+              </p>
+            ) : controller.customerOrders.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No previous orders found.
+              </p>
+            ) : (
+              <>
+                <div
+                  className={`hidden max-w-full overflow-x-auto md:block ${controller.customerOrders.length >= 10 ? "max-h-[28rem] overflow-y-auto" : ""}`}
+                >
+                  <table className="w-full min-w-[760px] table-fixed text-left text-sm">
+                    <thead className="text-xs uppercase tracking-wide text-muted-foreground">
+                      <tr className="border-b border-border/70">
+                        <th className="px-2 py-2">Order ID</th>
+                        <th className="px-2 py-2">Status</th>
+                        <th className="px-2 py-2">Items</th>
+                        <th className="px-2 py-2">Created</th>
+                        <th className="px-2 py-2">Updated</th>
+                        <th className="px-2 py-2 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {controller.customerOrders.map((historyOrder) => {
+                        const isSelected =
+                          controller.selectedHistoryOrderId === historyOrder.id;
+
+                        return (
+                          <tr
+                            key={historyOrder.id}
+                            className={`border-b border-border/50 ${isSelected ? "bg-primary/10" : "hover:bg-muted/50"}`}
+                          >
+                            <td className="px-2 py-2 font-mono text-xs break-all">
+                              {historyOrder.id}
+                            </td>
+                            <td className="px-2 py-2">
+                              {orderStatusLabel(historyOrder.status)}
+                            </td>
+                            <td className="px-2 py-2">
+                              {historyOrder.items.length}
+                            </td>
+                            <td className="px-2 py-2 text-xs text-muted-foreground">
+                              {formatDate(historyOrder.createdAt)}
+                            </td>
+                            <td className="px-2 py-2 text-xs text-muted-foreground">
+                              {formatDate(historyOrder.updatedAt)}
+                            </td>
+                            <td className="px-2 py-2 text-right">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  void controller.selectAndTrackOrder(
+                                    historyOrder.id,
+                                  )
+                                }
+                                disabled={controller.isBusy}
+                              >
+                                View details
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="space-y-2 md:hidden">
+                  {controller.customerOrders.map((historyOrder) => {
+                    const isSelected =
+                      controller.selectedHistoryOrderId === historyOrder.id;
+
+                    return (
+                      <div
+                        key={historyOrder.id}
+                        className={`space-y-2 rounded-md border p-3 ${isSelected ? "border-primary/50 bg-primary/10" : "border-border/70 bg-card/70"}`}
+                      >
+                        <div className="space-y-1">
+                          <p className="font-mono text-xs break-all text-foreground">
+                            {historyOrder.id}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {orderStatusLabel(historyOrder.status)} ·{" "}
+                            {historyOrder.items.length} items
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatDate(historyOrder.createdAt)}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() =>
+                            void controller.selectAndTrackOrder(historyOrder.id)
+                          }
+                          disabled={controller.isBusy}
+                        >
+                          View details
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -170,6 +378,9 @@ function OrderDetails({ order }: { order: OrderResponse }) {
       <FieldRow label="Payment" value={order.paymentMethod} />
       <FieldRow label="Created" value={formatDate(order.createdAt)} />
       <FieldRow label="Updated" value={formatDate(order.updatedAt)} />
+      {order.failureReason && (
+        <FieldRow label="Reason" value={order.failureReason} />
+      )}
 
       <div className="space-y-1">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -206,6 +417,9 @@ function PaymentDetails({ payment }: { payment: PaymentResponse }) {
         valueClassName="font-mono text-[11px] break-all"
       />
       <FieldRow label="Updated" value={formatDate(payment.updatedAt)} />
+      {payment.failureReason && (
+        <FieldRow label="Reason" value={payment.failureReason} />
+      )}
     </>
   );
 }
@@ -221,6 +435,10 @@ function ShippingDetails({ shipping }: { shipping: ShippingResponse }) {
       <FieldRow label="Tracking" value={shipping.trackingNumber} />
       <FieldRow label="Created" value={formatDate(shipping.createdAt)} />
       <FieldRow
+        label="Updated"
+        value={formatDate(shipping.lastUpdatedAt ?? shipping.createdAt)}
+      />
+      <FieldRow
         label="ETA"
         value={formatDate(shipping.estimatedDeliveryDate)}
       />
@@ -228,7 +446,111 @@ function ShippingDetails({ shipping }: { shipping: ShippingResponse }) {
         label="Delivered"
         value={shipping.deliveredAt ? formatDate(shipping.deliveredAt) : "-"}
       />
+      {shipping.failureReason && (
+        <FieldRow label="Reason" value={shipping.failureReason} />
+      )}
     </>
+  );
+}
+
+function FulfillmentTimeline({
+  order,
+  payment,
+  shipping,
+}: {
+  order?: OrderResponse;
+  payment?: PaymentResponse;
+  shipping?: ShippingResponse;
+}) {
+  const steps = [
+    {
+      key: "order",
+      title: "Order Received",
+      state: order ? "done" : "pending",
+      detail: order ? formatDate(order.createdAt) : "Waiting for order",
+    },
+    {
+      key: "payment",
+      title: "Payment",
+      state: payment
+        ? payment.status === 2
+          ? "error"
+          : payment.status === 1
+            ? "done"
+            : "active"
+        : "pending",
+      detail: payment
+        ? `${paymentStatusLabel(payment.status)} · ${formatDate(payment.updatedAt)}`
+        : "Waiting for payment update",
+    },
+    {
+      key: "shipping",
+      title: "Shipping",
+      state: shipping
+        ? shipping.status === 3
+          ? "error"
+          : shipping.status === 2
+            ? "done"
+            : "active"
+        : "pending",
+      detail: shipping
+        ? `${shippingStatusLabel(shipping.status)} · ${formatDate(shipping.lastUpdatedAt ?? shipping.createdAt)}`
+        : "Waiting for shipment update",
+    },
+    {
+      key: "delivered",
+      title: "Delivered",
+      state:
+        order?.status === 6 || shipping?.status === 2
+          ? "done"
+          : order?.status === 4 || order?.status === 8 || shipping?.status === 3
+            ? "error"
+            : "pending",
+      detail: shipping?.deliveredAt
+        ? formatDate(shipping.deliveredAt)
+        : "Pending delivery",
+    },
+  ] as const;
+
+  return (
+    <div className="rounded-md border border-border/70 bg-background/80 px-3 py-3">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        Fulfillment Timeline
+      </p>
+      <div className="grid gap-2 md:grid-cols-4">
+        {steps.map((step) => {
+          const toneClass =
+            step.state === "done"
+              ? "border-primary/40 bg-primary/10"
+              : step.state === "active"
+                ? "border-border/70 bg-muted/60"
+                : step.state === "error"
+                  ? "border-destructive/40 bg-destructive/10"
+                  : "border-border/60 bg-background";
+
+          const textToneClass =
+            step.state === "done"
+              ? "text-primary"
+              : step.state === "error"
+                ? "text-destructive"
+                : "text-foreground";
+
+          return (
+            <div
+              key={step.key}
+              className={`rounded-md border px-2.5 py-2 ${toneClass}`}
+            >
+              <p className={`text-xs font-semibold ${textToneClass}`}>
+                {step.title}
+              </p>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {step.detail}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -353,6 +675,7 @@ function orderStatusLabel(status: number): string {
     "Shipped",
     "Delivered",
     "Cancelled",
+    "Inventory Failed",
   ];
 
   return labels[status] ?? `Unknown (${status})`;
@@ -364,12 +687,12 @@ function paymentStatusLabel(status: number): string {
 }
 
 function shippingStatusLabel(status: number): string {
-  const labels = ["Shipped", "Delivered"];
+  const labels = ["Label Created", "In Transit", "Delivered", "Failed"];
   return labels[status] ?? `Unknown (${status})`;
 }
 
 function orderStatusTone(status: number): "ok" | "warn" | "error" {
-  if (status === 4 || status === 7) {
+  if (status === 4 || status === 7 || status === 8) {
     return "error";
   }
 
@@ -393,8 +716,12 @@ function paymentStatusTone(status: number): "ok" | "warn" | "error" {
 }
 
 function shippingStatusTone(status: number): "ok" | "warn" | "error" {
-  if (status === 1) {
+  if (status === 2) {
     return "ok";
+  }
+
+  if (status === 3) {
+    return "error";
   }
 
   return "warn";

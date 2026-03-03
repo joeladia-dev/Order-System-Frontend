@@ -5,7 +5,7 @@ import {
   requestCode,
   verifyCode,
 } from "./auth";
-import { createOrder, getOrder } from "./orders";
+import { createOrder, getOrder, listOrdersForCustomer } from "./orders";
 import {
   archiveProduct,
   createProduct,
@@ -43,6 +43,7 @@ export const api = {
   deleteProductPermanently,
   createOrder,
   getOrder,
+  listOrdersForCustomer,
   getPayment,
   getShipping,
 };

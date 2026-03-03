@@ -12,18 +12,7 @@ import {
 
 export function LandingPage() {
   return (
-    <section className="space-y-4">
-      <div className="ui-fade-in ui-lift-hover rounded-xl border border-border/70 bg-gradient-to-br from-card/85 to-card/60 p-4 shadow-sm">
-        <h2 className="text-lg font-semibold text-foreground">
-          Choose your workspace
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Follow a customer-first flow: sign in, place an order, then track
-          fulfillment. Admin catalog access is optional and only needed when you
-          want to manage products.
-        </p>
-      </div>
-
+    <section className="space-y-3 sm:space-y-4">
       <div className="ui-fade-in ui-lift-hover rounded-xl border border-border/70 bg-gradient-to-br from-card/85 to-card/60 p-4 shadow-sm">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
           Quick Start
@@ -57,7 +46,7 @@ export function LandingPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 md:grid-cols-3">
         <LandingCard
           icon={<KeyRound className="h-5 w-5 text-primary" />}
           title="Customer Sign In"
@@ -142,17 +131,19 @@ function LandingCard({
 }: LandingCardProps) {
   return (
     <Card
-      className={`ui-lift-hover ui-glow-hover bg-card/85 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg ${delayClassName ?? ""}`}
+      className={`ui-lift-hover ui-glow-hover flex h-full flex-col bg-card/85 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg ${delayClassName ?? ""}`}
     >
-      <CardHeader>
-        <CardTitle className="inline-flex items-center gap-2 text-lg">
+      <CardHeader className="space-y-1.5 pb-2 sm:space-y-2 sm:pb-3">
+        <CardTitle className="inline-flex items-center gap-2 text-base sm:text-lg">
           {icon}
           {title}
         </CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <CardDescription className="text-sm leading-5">
+          {description}
+        </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <ul className="space-y-1.5 text-sm text-muted-foreground">
+      <CardContent className="flex flex-1 flex-col space-y-2.5 sm:space-y-3">
+        <ul className="space-y-0.5 text-sm text-muted-foreground sm:space-y-1">
           {highlights.map((item) => (
             <li key={item} className="inline-flex items-start gap-2">
               <span className="mt-1 h-1.5 w-1.5 rounded-full bg-primary" />
@@ -161,12 +152,12 @@ function LandingCard({
           ))}
         </ul>
 
-        <p className="rounded-md bg-background/80 px-3 py-2 text-xs text-muted-foreground">
+        <p className="flex h-16 items-center rounded-md bg-background/80 px-2.5 py-1.5 text-xs leading-5 text-muted-foreground sm:px-3 sm:py-2">
           <span className="font-medium text-foreground">Best for:</span>{" "}
           {bestFor}
         </p>
 
-        <Button asChild className="w-full">
+        <Button asChild className="mt-auto h-9 w-full sm:h-10">
           <Link to={to}>
             Open <ArrowRight className="h-4 w-4" />
           </Link>

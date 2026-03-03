@@ -99,7 +99,9 @@ export function ProductsSection({ controller }: ProductsSectionProps) {
               ))}
             </div>
 
-            <div className="hidden overflow-hidden rounded-md border border-border md:block">
+            <div
+              className={`hidden rounded-md border border-border md:block ${controller.products.length >= 10 ? "max-h-[28rem] overflow-y-auto" : "overflow-hidden"}`}
+            >
               <table className="w-full text-sm">
                 <thead className="bg-muted/70 text-muted-foreground">
                   <tr>

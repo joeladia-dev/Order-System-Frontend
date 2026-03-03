@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import type { Product } from "../../lib/api";
+import type { OrderResponse, Product } from "../../lib/api";
 import type {
   OrderDraftItem,
   OrderFormState,
@@ -51,6 +51,10 @@ export function useDashboardState() {
   const [createdOrderId, setCreatedOrderId] = useState("");
   const [trackOrderId, setTrackOrderId] = useState("");
   const [trackData, setTrackData] = useState<OrderTrackResult>({});
+  const [customerOrders, setCustomerOrders] = useState<OrderResponse[]>([]);
+  const [isCustomerOrdersLoading, setIsCustomerOrdersLoading] = useState(false);
+  const [customerOrdersError, setCustomerOrdersError] = useState("");
+  const [selectedHistoryOrderId, setSelectedHistoryOrderId] = useState("");
 
   const tokenHint = useMemo(
     () => getTokenHint(customerToken, hasOAuthSession),
@@ -95,6 +99,14 @@ export function useDashboardState() {
     setTrackOrderId,
     trackData,
     setTrackData,
+    customerOrders,
+    setCustomerOrders,
+    isCustomerOrdersLoading,
+    setIsCustomerOrdersLoading,
+    customerOrdersError,
+    setCustomerOrdersError,
+    selectedHistoryOrderId,
+    setSelectedHistoryOrderId,
   };
 }
 

@@ -19,6 +19,7 @@ export type OrderResponse = {
   shippingAddress: string;
   paymentMethod: string;
   status: number;
+  failureReason?: string | null;
   createdAt: string;
   updatedAt: string;
   items: Array<{
@@ -39,4 +40,14 @@ export function getOrder(orderId: string, token?: string) {
   return requestJson<OrderResponse>(`/api/orders/${orderId}`, {
     token,
   });
+}
+
+export function listOrdersForCustomer(customerId: string, token?: string) {
+  const encodedCustomerId = encodeURIComponent(customerId);
+  return requestJson<OrderResponse[]>(
+    `/api/orders/customer/${encodedCustomerId}`,
+    {
+      token,
+    },
+  );
 }
