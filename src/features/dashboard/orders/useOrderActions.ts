@@ -18,12 +18,16 @@ export function useOrderActions(state: DashboardState, runBusy: BusyRunner) {
     }
 
     if (!selectedProduct) {
-      state.setStatus("Selected product is no longer available. Refresh products.");
+      state.setStatus(
+        "Selected product is no longer available. Refresh products.",
+      );
       return;
     }
 
     if (selectedProduct.isArchived) {
-      state.setStatus(`Product ${selectedProduct.id} is archived and cannot be ordered.`);
+      state.setStatus(
+        `Product ${selectedProduct.id} is archived and cannot be ordered.`,
+      );
       return;
     }
 
@@ -38,9 +42,14 @@ export function useOrderActions(state: DashboardState, runBusy: BusyRunner) {
     }
 
     state.setOrderItems((prev) => {
-      const existing = prev.find((item) => item.productId === selectedProductId);
+      const existing = prev.find(
+        (item) => item.productId === selectedProductId,
+      );
       const requestedQuantity = (existing?.quantity ?? 0) + selectedQuantity;
-      const boundedQuantity = Math.min(requestedQuantity, selectedProduct.stock);
+      const boundedQuantity = Math.min(
+        requestedQuantity,
+        selectedProduct.stock,
+      );
 
       if (requestedQuantity > selectedProduct.stock) {
         state.setStatus(
@@ -67,7 +76,9 @@ export function useOrderActions(state: DashboardState, runBusy: BusyRunner) {
   };
 
   const removeOrderItem = (productId: string) => {
-    state.setOrderItems((prev) => prev.filter((item) => item.productId !== productId));
+    state.setOrderItems((prev) =>
+      prev.filter((item) => item.productId !== productId),
+    );
     state.setStatus(`Removed ${productId} from order items.`);
   };
 
@@ -93,7 +104,9 @@ export function useOrderActions(state: DashboardState, runBusy: BusyRunner) {
 
     state.setOrderItems((prev) =>
       prev.map((item) =>
-        item.productId === productId ? { ...item, quantity: boundedQuantity } : item,
+        item.productId === productId
+          ? { ...item, quantity: boundedQuantity }
+          : item,
       ),
     );
   };
@@ -123,7 +136,7 @@ export function useOrderActions(state: DashboardState, runBusy: BusyRunner) {
       state.setTrackOrderId(response.orderId);
       state.setOrderItems([]);
       state.setStatus(
-        `Order ${response.orderId} created with status ${response.status}`,
+        `Order ${response.orderId} created with status ${orderStatusLabel(response.status)}.`,
       );
     });
   };
@@ -134,4 +147,20 @@ export function useOrderActions(state: DashboardState, runBusy: BusyRunner) {
     updateOrderItemQuantity,
     createOrder,
   };
+}
+
+function orderStatusLabel(status: number): string {
+  const labels = [
+    "Pending",
+    "Inventory Reserved",
+    "Payment Processing",
+    "Payment Completed",
+    "Payment Failed",
+    "Shipped",
+    "Delivered",
+    "Cancelled",
+    "Inventory Failed",
+  ];
+
+  return labels[status] ?? `Unknown (${status})`;
 }
